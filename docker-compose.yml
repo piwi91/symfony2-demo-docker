@@ -1,7 +1,9 @@
 application:
   build: docker/application
+  links:
+    - memcached
   volumes:
-    - ./:/var/www
+    - ./code:/var/www
 
 nginx:
   build: docker/nginx
@@ -11,9 +13,30 @@ nginx:
     - php
   volumes_from:
     - application
+
+memcached:
+  image: memcached
+  command: memcached -m 128
+
+mysql:
+  image: mysql:5.5
+  environment:
+    - MYSQL_ROOT_PASSWORD=hotflo
+    - MYSQL_DATABASE=hotflo
+  volumes:
+    - ./mysql:/var/lib/mysql
+
+mongo:
+  image: mongo:2.6
+  volumes:
+    - ./mongo:/data/db
  
 php:
-  image: php:7.0-fpm
+  build: docker/php-fpm
   working_dir: /var/www
+  links:
+    - memcached
+    - mysql
+    - mongo
   volumes_from:
     - application
